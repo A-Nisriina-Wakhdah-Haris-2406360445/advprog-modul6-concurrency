@@ -15,3 +15,26 @@ Fungsi `handle_connection` digunakan untuk menerima koneksi TCP dan membaca requ
 6. Data yang telah dibaca akan di kumpulkan ke dalam sebuah vector bertipe `Vec<String>` menggunakan `.collect()`.
 7. Hasil request akan ditampilkan ke console menggunakan pretty debug format `{:#?}`.
 </details>
+
+<details>
+<Summary><b>Commit 2 Reflection notes</b></Summary>
+
+Fungsi `handle_connection` digunakan untuk menerima dan membaca HTTP request dari client, menyiapkan HTTP response berupa status dan file hello.html, dan mengirim response kembali ke client.
+
+1. Fungsi ini menerima koneksi berupa input stream yang bertipe `TcpStream`. `TcpStream` merupakan representasi koneksi TCP antara client (browser) dan server.
+2. Input stream tersebut kemudian dibungkus menggunakan `BufReader`. Dengan menggunakan `BufReader`, proses pembacaan data bisa berjalan lebih efisien karena data dibuffer terlebih dahulu sebelum dibaca oleh program.
+3. Kemudian, program akan membaca HTTP request dari client perbaris menggunakan `.lines()`. Setiap baris yang dibaca berupa `Result` sehingga akan di-unwrap untuk mendapatkan nilai String menggunakan `.map(|result| result.unwrap())`. Proses pembacaan dilakukan hingga menemukan baris kosong yang akan menandakan akhir dari header HTTP (`.take_while(|line| !line.is_empty())`). Seluruh baris request tersebut  kemudaian akan dikumpulkan ke dalam sebuah `Vec<String>` bernama `http_request`
+4. Setelah itu, program akan menentukan response, di mana jika request berhasil, program akan mengembalikan status `"HTTP/1.1 200 OK"`
+5. Lalu, program akan membaca isi file hello.html menggunakan `fs::read_to_string` dan akan menyimpannya sebagai bentuk `String`.
+6. Program kemudian akan menghitung panjang konten menggunakan `contents.len()`. Nilai ini akan digunakan sebagai header `Content-Length` yang diperlukan browser untuk mengetahui jumlah byte yang harus dibaca.
+7. Setelah menghitung `content_length`, program akan menyusun HTTP response yang kemudian akan dikirimkan ke client melalui `TcpStream` menggunakan `write_all`. Response tersebut akan dikonversi ke dalam bentuk bytes menggunakan `.as_bytes()`.
+8. Jika response sudah diterima, browser akan memproses dan menampilkan isi hello.html ke user.
+
+Perbedaannya dengan kode yang lama adalah:
+1. Kode lama hanya menampilkan isi request ke terminal (bersifat debugging), sedangkan pada kode baru, server tidak hanya membaca request, tetapi juga mengirimkan response sehingga halaman HTML dapay ditampilkan di browser.
+2. Pada kode baru, response HTTP disusun secara lengkap dibandingkan pada kode lama.
+3. Pada kode lama, browser tidak menerima response sehingga akan terus loading atau timeout. Sedangkan pada kode baru, browser akan menerima response berupa isi file HTML.
+
+Berikut ini merupakan tampilan browse ketika program dijalankan:
+![Commit 2 screen capture](commit2.png)
+</details>
