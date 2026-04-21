@@ -1,5 +1,7 @@
 use std::{
-    fs, hash::BuildHasher, io::{BufReader, prelude::*}, net::{TcpListener, TcpStream}
+    fs, 
+    io::{BufReader, prelude::*}, 
+    net::{TcpListener, TcpStream}
 };
 
 fn main() {
