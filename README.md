@@ -72,7 +72,7 @@ Penambahan endpoint tersebut menunjukkan adanya simulasi proses yang memakan wak
 <h1>File lib.rs</h1>
 Struktur utama untuk ThreadPool adalah pub struct ThreadPool yang berisi workers dan sender. workers merupakan kumpulan thread (worker), sedangkan sender berfungsi sebagai pintu masuk untuk mengirim job ke dalam queue.
 
-type Job merupakan fungsi anonim (closure) yang dapat dijalankan satu kali (FnOnce), aman untuk dikirim antar thread (Send), dan tidak bergantung pada scope lokal ('static).
+`type Job` merupakan fungsi anonim (closure) yang dapat dijalankan satu kali (`FnOnce`), aman untuk dikirim antar thread (`Send`), dan tidak bergantung pada scope lokal (`static`).
 
 struct Worker merepresentasikan satu thread yang akan mengambil dan mengeksekusi job dari queue.
 
@@ -95,9 +95,17 @@ Channel digunakan sebagai antrian job, di mana:
 
 Implementasi ThreadPool pada file main.rs dilakukan dengan cara mengirimkan job ke ThreadPool melalui method `execute()`. Pada saat terdapat koneksi masuk, program akan membuat sebuah closure yang berisi pemanggilan fungsi `handle_connection(stream)`.
 
-Closure tersebut kemudian dibungkus menjadi sebuah job dan dikirim ke dalam queue menggunakan channel (mpsc). Setelah job masuk ke dalam queue, salah satu worker thread yang tersedia akan mengambil job tersebut melalui receiver. Worker thread akan terus berjalan dalam sebuah loop, di mana ia akan:
+Closure tersebut kemudian dibungkus menjadi sebuah job dan dikirim ke dalam queue menggunakan channel (`mpsc`). Setelah job masuk ke dalam queue, salah satu worker thread yang tersedia akan mengambil job tersebut melalui receiver. Worker thread akan terus berjalan dalam sebuah loop, di mana ia akan:
 1. Mengambil job dari queue menggunakan `recv()`
 2. Menjalankan job tersebut (yaitu `handle_connection(stream)`)
 3. Kembali menunggu job berikutnya
 Dengan demikian, main thread hanya bertugas menerima koneksi dan mendistribusikan pekerjaan, sementara worker thread menangani request secara paralel.
+</details>
+
+<details>
+<Summary><b>(Bonus) Commit 6 Reflection notes</b></Summary>
+
+Perbedaan antara fungsi `new()` dan `build()` terletak pada cara menangani error. Fungsi new() menggunakan `assert!`, sehingga ketika terjadi kondisi `size == 0`, program akan langsung berhenti (panic). Hal ini menyebabkan error tidak dapat ditangani oleh program, sehingga kurang aman jika digunakan pada kondisi yang memungkinkan input tidak valid.
+
+Sebaliknya, fungsi `build()` mengembalikan nilai bertipe `Result`. Sehingga, jika terjadi kondisi `size == 0`, maka fungsi tidak akan menyebabkan program crash, melainkan mengembalikan nilai `Err` yang dapat ditangani oleh fungsi pemanggil (`main()`). Dengan demikian, program tetap dapat berjalan tanpa crash dan memberikan info terkait error yang terjadi. Selain itu, penggunaan `build()` lebih fleksibel karena programmer dapat menentukan bagaimana cara menangani error, ex: menampilkan pesan error atau melakukan tindakan alternatif. Oleh sebab itu, `build()` lebih sesuai dengan prinsip Rust yang mengutamakan error handling menggunakan `Result` dibandingkan dengan panic.
 </details>
