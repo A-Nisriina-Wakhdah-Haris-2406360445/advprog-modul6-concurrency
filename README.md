@@ -53,3 +53,15 @@ Refactoring ini diperlukan untuk mengurangi duplikasi kode pada proses pembuatan
 Berikut ini adalah tampilan browser ketika kode dijalankan:
 ![Commit 3 screen capture](/images/commit3.png)
 </details>
+
+<details>
+<Summary><b>Commit 4 Reflection notes</b></Summary>
+
+Perbedaan fungsi `handle_connection` saat ini dengan sebelumnya terletak pada cara program menentukan response terhadap request yang diterima dari client.
+
+Pada kode sebelumnya, penentuan proses dilakukan menggunakan blok `if-else` yang menangani kondisi satu per satu. Pada kode saat ini, penentuan response menggunakan pattern matching (`match`) sehingga lebih fleksibel dalam menangani berbagai jenis request, meningkatkan readability, dan mantainability kode, terutama jika jumlah endpoint bertambah. Selain itu, pada kode saat ini terdapat endpoint baru bernama `"/sleep"`.
+
+Ketika client mengirimkan request ke path `/`, server akan mengembalikan halaman utama, yaitu `hello.html` dengan status 200 OK. Namun, ketika client mengirimkan request ke path `/sleep`, server akan menunda response selama 10 detik. Hal ini dikarenakan, ketika mengirimkan request ke path tersebut, program akan menjalankan `thread::sleep(Duration::from_secs(10));`, yang memiliki arti thread saat ini "ditidurkan" selama 10 detik (tidak melakukan apa-apa). Kemudian setelah 10 detik, server akan mengembalikan halaman yang sama. Duration digunakan untuk membuat objek durasi waktu (representasi waktu saja) dan thread::sleep() berfungsi untuk memberi tahu sistem operasi untuk menangguhkan thread saat ini. Selama sleep, thread tidak menggunaka CPU dan CPU bisa dipakai oleh thread lain. Setelah 10 detik, OS akan membangunkan thread dan memindahkannya ke state `Ready` dan thread akan lanjut mengeksekusi baris setelah `sleep` dijalankan. Selain itu, jika client mengirimkan request ke path diluar path yang telah didefinisikan, maka server akan mengembalikan halaman 404.html sebagai penanda bahwa path yang diinginkan tidak tersedia.
+
+Penambahan endpoint tersebut menunjukkan adanya simulasi proses yang memakan waktu lama, sehingga menyebabkan blocking behavior. Blocking behavior merupakan kejadian ketika selama proses sleep berlangsung, suatu thread tidak dapat menangani request lain.
+</details>
