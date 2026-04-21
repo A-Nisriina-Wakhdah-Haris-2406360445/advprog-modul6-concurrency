@@ -36,5 +36,20 @@ Perbedaannya dengan kode yang lama adalah:
 3. Pada kode lama, browser tidak menerima response sehingga akan terus loading atau timeout. Sedangkan pada kode baru, browser akan menerima response berupa isi file HTML.
 
 Berikut ini merupakan tampilan browse ketika program dijalankan:
-![Commit 2 screen capture](commit2.png)
+![Commit 2 screen capture](/images/commit2.png)
+</details>
+
+<details>
+<Summary><b>Commit 3 Reflection notes</b></Summary>
+
+Cara Split between response adalah dengan memisahkan proses penentuan response dengan proses pembuatan dan pengiriman response. Response tidak langsung dibuat sekaligus, melainkan dipecah menjadi dua tahap, yaitu:
+1. Menentukan response
+Pada tahap ini, program menentukan status HTTP dan file apa yang akan dikirimkan ke client sebagai response dari request yang diterima.
+2. Membuat dan mengirim response
+Setelah menentukan response apa yang akan dikirim, program akan membaca file, menghitung panjang data, menyusun format HTTP, lalu mengirimkannya ke client.
+
+Refactoring ini diperlukan untuk mengurangi duplikasi kode pada proses pembuatan HTTP response dan membuat kode sesuai dengan prinsip DRY. Hal ini dikarenakan, pada kode sebelumnya, setiap kondisi memiliki blok kode yang identik untuk membaca file, menghitung panjang konten, menyusun HTTP response, dan mengirim response. Selain itu, refactoring diperlukan untuk meningkatkan readability kode, mempermudah maintanance (misalnya jika nanti ingin mengubah format response), serta memudahkan pengembangan fitur di masa depan.
+
+Berikut ini adalah tampilan browser ketika kode dijalankan:
+![Commit 3 screen capture](/images/commit3.png)
 </details>
