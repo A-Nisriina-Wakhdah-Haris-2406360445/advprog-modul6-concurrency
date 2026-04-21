@@ -65,3 +65,39 @@ Ketika client mengirimkan request ke path `/`, server akan mengembalikan halaman
 
 Penambahan endpoint tersebut menunjukkan adanya simulasi proses yang memakan waktu lama, sehingga menyebabkan blocking behavior. Blocking behavior merupakan kejadian ketika selama proses sleep berlangsung, suatu thread tidak dapat menangani request lain.
 </details>
+
+<details>
+<Summary><b>Commit 5 Reflection notes</b></Summary>
+
+<h1>File lib.rs</h1>
+Struktur utama untuk ThreadPool adalah pub struct ThreadPool yang berisi workers dan sender. workers merupakan kumpulan thread (worker), sedangkan sender berfungsi sebagai pintu masuk untuk mengirim job ke dalam queue.
+
+type Job merupakan fungsi anonim (closure) yang dapat dijalankan satu kali (FnOnce), aman untuk dikirim antar thread (Send), dan tidak bergantung pada scope lokal ('static).
+
+struct Worker merepresentasikan satu thread yang akan mengambil dan mengeksekusi job dari queue.
+
+Berikut ini adalah langkah-langkah pembuatan ThreadPool, yaitu:
+1. Validasi ukuran thread
+program akan memastikan jumlah thread lebih dari 0 menggunakan `assert!(size > 0);`.
+2. Membuat channel (queue) menggunakan `let (sender, receiver) = mpsc::channel();`
+Channel digunakan sebagai antrian job, di mana:
+- `sender` digunakan untuk mengirimkan job
+- `receiver` digunakan oleh worker untuk menerima job.
+3. Membagikan receiver ke banyak thread menggunakan `let receiver = Arc::new(Mutex::new(receiver));`. Beberapa komponen penting;
+- `Arc` (Atomic Reference Counting): Membagikan ownership antar thread. 
+- `Mutex`: Mencegah race condition dengan memastikan hanya satu thread yang mengakses receiver pada satu waktu.
+- `Receiver`: Tidak bisa diakses secara bersamaan oleh banyak thread, sehingga perlu dilindungi dengan Mutex
+4. Membuat worker threads `workers.push(Worker::new(id, Arc::clone(&receiver)));`, di mana setiap worker merupakan thread yang berjalan terus-menerus dan memiliki akses ke queue yang sama.
+5. Mengirim job menggunakan fungsi `pub fn execute<F>(&self, f: F)` dengan cara mengubah request menjadi job dan memasukkannya ke dalam queue.
+6. `Worker` thread akan mengambil job dengan cara melakukan `lock()` pada `Mutex`. lalu Worker memanggil `recv()` untuk mengambil job dari queue. Jika tidak ada job, maka thread akan blocking (menunggu) tanpa menggunakan CPU. Jika ada job, maka job dijalankan `job()`. Setelah selesai, kembali ke loop untuk mengambil job berikutnya.
+
+<h1>File main.rs</h1>
+
+Implementasi ThreadPool pada file main.rs dilakukan dengan cara mengirimkan job ke ThreadPool melalui method `execute()`. Pada saat terdapat koneksi masuk, program akan membuat sebuah closure yang berisi pemanggilan fungsi `handle_connection(stream)`.
+
+Closure tersebut kemudian dibungkus menjadi sebuah job dan dikirim ke dalam queue menggunakan channel (mpsc). Setelah job masuk ke dalam queue, salah satu worker thread yang tersedia akan mengambil job tersebut melalui receiver. Worker thread akan terus berjalan dalam sebuah loop, di mana ia akan:
+1. Mengambil job dari queue menggunakan `recv()`
+2. Menjalankan job tersebut (yaitu `handle_connection(stream)`)
+3. Kembali menunggu job berikutnya
+Dengan demikian, main thread hanya bertugas menerima koneksi dan mendistribusikan pekerjaan, sementara worker thread menangani request secara paralel.
+</details>
